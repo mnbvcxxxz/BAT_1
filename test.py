@@ -6,3 +6,6 @@ upbit = pyupbit.Upbit(access, secret)
 
 print(upbit.get_balance("KRW-ETH"))     # KRW-XRP 조회
 print(upbit.get_balance("KRW"))         # 보유 현금 조회
+print(pyupbit.get_tickers(fiat="KRW"))  # 특정Fiat로 매매 가능한 목록 조회
+#
+print(pyupbit.get_ohlcv("KRW-BTC", interval="day", count=5))
