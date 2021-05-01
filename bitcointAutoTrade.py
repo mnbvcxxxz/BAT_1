@@ -5,12 +5,21 @@ import requests
 
 access = "NoRVfwch6I71UZHCZq3ji9Z5xcXz8r7U2QnxlGQn"
 secret = "J7t7vx31yrnbETxKroRJ6M1nyiddgGR571UL1YfG"
-myToken = "xoxb-2022008201107-2018729025317-bVjaXVu5ycIWBEd0qqQcQQTh"
+myToken = ""
+upbit = pyupbit.Upbit(access, secret)
 
+
+"""주문 기본정보 및 기준"""
 Coin_KRW = "KRW-BTC" #ticker_KRW
 Coin = "BTC" #ticker
 intervals = "minute60"
-K = 0.5
+K = 0.5  # 추후 자동 K값 산출하기~~~~~~~~~~~
+
+print("코인잔고(",Coin_KRW,") : ", upbit.get_balance(Coin_KRW))     # KRW-XRP 조회
+print("현금잔고(원) : ", upbit.get_balance("KRW"))         # 보유 현금 조회
+print("세팅 K값",K)
+print("최근추세 : ", pyupbit.get_ohlcv(Coin_KRW, interval=intervals, count=10),sep='\n')
+
 
 def post_message(token, channel, text):
     """슬랙 메시지 전송"""
@@ -37,8 +46,8 @@ def get_ma15(ticker):
     ma15 = df['close'].rolling(15).mean().iloc[-1]
     return ma15
 
-def get_balance(coin):
     """잔고 조회"""
+def get_balance(coin):
     balances = upbit.get_balances()
     for b in balances:
         if b['currency'] == coin:
@@ -53,33 +62,35 @@ def get_current_price(ticker):
 
 # 로그인
 upbit = pyupbit.Upbit(access, secret)
-print("autotrade start")
+print("\n--------Autotrade start--------\n")
 # 시작 메세지 슬랙 전송
-post_message(myToken,"#crypto", "autotrade start")
+post_message(myToken,"#거래-내역", "autotrade start")
 
 #자동매매코드
 while True:
     try:
         now = datetime.datetime.now()
         start_time = get_start_time(Coin_KRW)
-        end_time = start_time + datetime.timedelta(days=1)
+        end_time = start_time + datetime.timedelta(minutes=60)
 
-        if start_time < now < end_time - datetime.timedelta(seconds=10):
-            target_price = get_target_price(Coin_KRW, K)
-            ma15 = get_ma15(Coin_KRW)
-            current_price = get_current_price(Coin_KRW)
-            if target_price < current_price and ma15 < current_price:
-                krw = get_balance("KRW")
-                if krw > 5000:
-                    buy_result = upbit.buy_market_order(Coin_KRW, krw*0.9995)
-                    post_message(myToken,"#crypto", "BTC buy : " +str(buy_result))
+        if start_time < now < end_time - datetime.timedelta(seconds=10):  # 현재 시간이 시작시간과 종료시간-10초 사이에있다면
+            target_price = get_target_price(Coin_KRW, K)                  # 내가 설정한 코인과 K값으로 타겟매수가 설정
+            ma15 = get_ma15(Coin_KRW)                                     # 15일 이동평균을 분석하고
+            current_price = pyupbit.get_current_price(Coin_KRW)                   # 코인의 현재 가격을 조회한다
+            if target_price < current_price and ma15 < current_price:     # 타겟매수가가 ma15충족, 현재가보다 낮다면
+                krw = get_balance("KRW")                                  # 내 원화통장 잔고를 확인해보고
+                if krw > 5000:                                            # 통장잔고가 5000원 이상 있을경우
+                    buy_result = upbit.buy_market_order(Coin_KRW, krw*0.9995)    # 수수료 제외한 원화로 시장가매수
+                    post_message(myToken,"#거래-내역", "Coin buy : " +str(buy_result))   # 결과를 Slack 전송
+                    print("매수결과 : ", buy_result, upbit.get_balance())
         else:
-            coin_price = get_balance(Coin)
-            if coin_price > 0.00008:  # 어떤 코인을 넣어도 원화 5000원으로환산해야함 (최소거래금액)
-                sell_result = upbit.sell_market_order(Coin_KRW, coin_price*0.9995)
-                post_message(myToken,"#crypto", "BTC buy : " +str(sell_result))
+            coin_price = get_balance(Coin)                                 # 설정 코인의 잔고를 조회하고
+            if coin_price > 0.00007:  # (5000원 나누기 현재가격), 최소거래 5천원 이상일경우를 잡아야하는데 자동매도가 안됨
+                sell_result = upbit.sell_market_order(Coin_KRW, coin_price*0.9995)   # 수수료 제외한 코인가격을 시장가 매도
+                post_message(myToken,"#거래-내역", "Coin sell : " +str(sell_result))   # 결과 Slack전송
+                print("매도결과 : ", sell_result, upbit.get_balance())
         time.sleep(1)
     except Exception as e:
         print(e)
-        post_message(myToken,"#crypto", e)
+        post_message(myToken,"#거래-내역", e)
         time.sleep(1)

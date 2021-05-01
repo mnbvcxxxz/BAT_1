@@ -14,8 +14,8 @@ Etherium = "KRW-ETH"
 Bitcoin = "KRW-BTC"
 
 # 매매 인터벌, 최근 조회데이터 수 정의
-intervals="minute30"
-counts=7
+intervals = "minute30"
+counts = 1
 
 #K값 세팅
 K=0.3
@@ -28,6 +28,7 @@ print(upbit.get_balance("KRW"))         # 보유 현금 조회
 print(pyupbit.get_ohlcv(Etherium, interval=intervals, count=counts))
 
 print("----------------------백테스팅-------------------")
+print(round(5000/pyupbit.get_current_price("KRW-BTC")))
 
 # OHLCV(open, high, low, close, volume)로 당일 시가, 고가, 저가, 종가, 거래량에 대한 데이터
 print("지난 데이터 추출")
