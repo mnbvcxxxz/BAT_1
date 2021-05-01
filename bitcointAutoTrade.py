@@ -5,18 +5,12 @@ import requests
 
 access = "NoRVfwch6I71UZHCZq3ji9Z5xcXz8r7U2QnxlGQn"
 secret = "J7t7vx31yrnbETxKroRJ6M1nyiddgGR571UL1YfG"
-myToken = "xoxb-2022008201107-2018729025317-bVjaXVu5ycIWBEd0qqQcQQTh" #슬랙토큰
+myToken = "xoxb-2022008201107-2018729025317-bVjaXVu5ycIWBEd0qqQcQQTh"
 
-# 코인 정의
-Etherium = "KRW-ETH"
-Bitcoin = "KRW-BTC"
-
-# 매매 인터벌, 최근 조회데이터 수 정의
-intervals = "minute30"
-counts = 7
-
-#K값 세팅 ->나중에 최적 K값 자동계산하도록
-K=0.3
+Coin_KRW = "KRW-BTC"
+Coin = "BTC"
+intervals = "minute60"
+K = 0.5
 
 def post_message(token, channel, text):
     """슬랙 메시지 전송"""
@@ -27,13 +21,13 @@ def post_message(token, channel, text):
 
 def get_target_price(ticker, k):
     """변동성 돌파 전략으로 매수 목표가 조회"""
-    df = pyupbit.get_ohlcv(ticker, interval="day", count=2)
+    df = pyupbit.get_ohlcv(ticker, interval=intervals, count=2)
     target_price = df.iloc[0]['close'] + (df.iloc[0]['high'] - df.iloc[0]['low']) * k
     return target_price
 
 def get_start_time(ticker):
     """시작 시간 조회"""
-    df = pyupbit.get_ohlcv(ticker, interval="day", count=1)
+    df = pyupbit.get_ohlcv(ticker, interval=intervals, count=1)
     start_time = df.index[0]
     return start_time
 
@@ -63,29 +57,28 @@ print("autotrade start")
 # 시작 메세지 슬랙 전송
 post_message(myToken,"#crypto", "autotrade start")
 
-# 자동매매코드
 while True:
     try:
         now = datetime.datetime.now()
-        start_time = get_start_time(Etherium)
-        end_time = start_time + datetime.timedelta(minutes=30) #days로 해야하나 minute으로 해야하나
+        start_time = get_start_time(Coin_KRW)
+        end_time = start_time + datetime.timedelta(days=1)
 
         if start_time < now < end_time - datetime.timedelta(seconds=10):
-            target_price = get_target_price(Etherium, K)
-            ma15 = get_ma15(Etherium)
-            current_price = get_current_price(Etherium)
+            target_price = get_target_price(Coin_KRW, K)
+            ma15 = get_ma15(Coin_KRW)
+            current_price = get_current_price(Coin_KRW)
             if target_price < current_price and ma15 < current_price:
                 krw = get_balance("KRW")
                 if krw > 5000:
-                    buy_result = upbit.buy_market_order(Etherium, krw*0.9995)
-                    post_message(myToken,"#거래-내역", "BTC buy : " +str(buy_result))
+                    buy_result = upbit.buy_market_order(Coin_KRW, krw*0.9995)
+                    post_message(myToken,"#crypto", "BTC buy : " +str(buy_result))
         else:
-            btc = get_balance("BTC")
-            if btc > 0.00008: #현재 가격이 5천원일경우? 수정 필요할듯
-                sell_result = upbit.sell_market_order(Etherium, btc*0.9995)
-                post_message(myToken,"#거래-내역", "BTC buy : " +str(sell_result))
+            btc = get_balance(Coin)
+            if btc > 0.00008:
+                sell_result = upbit.sell_market_order(Coin_KRW, btc*0.9995)
+                post_message(myToken,"#crypto", "BTC buy : " +str(sell_result))
         time.sleep(1)
     except Exception as e:
         print(e)
-        post_message(myToken,"#거래-내역", e)
+        post_message(myToken,"#crypto", e)
         time.sleep(1)
