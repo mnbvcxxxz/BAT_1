@@ -7,8 +7,8 @@ access = "NoRVfwch6I71UZHCZq3ji9Z5xcXz8r7U2QnxlGQn"
 secret = "J7t7vx31yrnbETxKroRJ6M1nyiddgGR571UL1YfG"
 myToken = "xoxb-2022008201107-2018729025317-bVjaXVu5ycIWBEd0qqQcQQTh"
 
-Coin_KRW = "KRW-BTC"
-Coin = "BTC"
+Coin_KRW = "KRW-BTC" #ticker_KRW
+Coin = "BTC" #ticker
 intervals = "minute60"
 K = 0.5
 
@@ -57,6 +57,7 @@ print("autotrade start")
 # 시작 메세지 슬랙 전송
 post_message(myToken,"#crypto", "autotrade start")
 
+#자동매매코드
 while True:
     try:
         now = datetime.datetime.now()
@@ -73,9 +74,9 @@ while True:
                     buy_result = upbit.buy_market_order(Coin_KRW, krw*0.9995)
                     post_message(myToken,"#crypto", "BTC buy : " +str(buy_result))
         else:
-            btc = get_balance(Coin)
-            if btc > 0.00008:
-                sell_result = upbit.sell_market_order(Coin_KRW, btc*0.9995)
+            coin_price = get_balance(Coin)
+            if coin_price > 0.00008:  # 어떤 코인을 넣어도 원화 5000원으로환산해야함 (최소거래금액)
+                sell_result = upbit.sell_market_order(Coin_KRW, coin_price*0.9995)
                 post_message(myToken,"#crypto", "BTC buy : " +str(sell_result))
         time.sleep(1)
     except Exception as e:
