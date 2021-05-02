@@ -85,10 +85,16 @@ while True:
             current_price = pyupbit.get_current_price(Coin_KRW)                   # 코인의 현재 가격을 조회한다
             if target_price < current_price and ma15 < current_price:     # 타겟매수가가 ma15충족, 현재가보다 낮다면
                 krw = get_balance("KRW")                                  # 내 원화통장 잔고를 확인해보고
-                if krw > 5000:                                            # 통장잔고가 5000원 이상 있을경우
+                if 5000 < krw < 200000:                                            # 통장잔고가 5000원 이상 있을경우
                     buy_result = upbit.buy_market_order(Coin_KRW, krw*0.9995)    # 수수료 제외한 원화로 시장가매수
                     post_message(myToken,"#거래-내역", "Coin buy : " +str(buy_result))   # 결과를 Slack 전송
                     print("매수결과 : ", buy_result, upbit.get_balance())
+                elif 200000 <= krw:
+                    buy_result = upbit.buy_market_order(Coin_KRW, krw*(200000/krw))  # 최대매수한도 20만원
+                    print("매수결과 : ", buy_result, upbit.get_balance())
+                else:
+                    print("원화가 부족합니다")
+
         else:
             coin_price = get_balance(Coin)                                 # 설정 코인의 잔고를 조회하고
             if coin_price > coin_over_5000KRW(Coin_KRW):                   # 잔고가 5000원 있을 경우
