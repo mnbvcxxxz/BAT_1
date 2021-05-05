@@ -4,8 +4,8 @@ import datetime
 import requests
 import numpy as np
 
-access = "NoRVfwch6I71UZHCZq3ji9Z5xcXz8r7U2QnxlGQn"
-secret = "J7t7vx31yrnbETxKroRJ6M1nyiddgGR571UL1YfG"
+access =
+secret =
 myToken = "xoxb-2022008201107-2046141877680-eT16j1cCTiN3OqWGuSLIMdnO"
 upbit = pyupbit.Upbit(access, secret)
 
